@@ -4,6 +4,7 @@ const User = require("../models/user");
 const jwtService = require('../Services/jwt');
 const mongoosePaginate = require('mongoose-pagination');
 const imageUtilites = require('./imageUtilities');
+const FollowUtilites = require('./follow');
 
 const userControllers = {
 
@@ -18,8 +19,8 @@ const userControllers = {
       user.nick = nick;
       user.email = email;
       user.role = 'ADMIN',
-      user.image = null,
-      user.bio = null,
+        user.image = null,
+        user.bio = null,
 
         User.find({
           $or: [
@@ -72,7 +73,6 @@ const userControllers = {
       })
     } else return res.status(400).send({ message: "Faltan Campos por rellena" });
   },
-
   getUser: (req, res) => {
     const userId = req.params.id
 
@@ -80,13 +80,19 @@ const userControllers = {
       user.password = null //Hide password
       if (err) return res.status(500).send({ message: 'Error en la peticion' })
       if (!user) return res.status(404).send({ message: 'El usuario no existe' })
-
-      return res.status(200).send({ user });
+      FollowUtilites.followThisUser(req.user.sub, userId, req).then((value) => {
+        console.log(value);
+        res.status(200).send({
+          user,
+          follofing: value.following,
+          followed: value.followed
+        });
+      })
     })
   },
 
   getUsers: (req, res) => {
-    const currentUserId = req.user.sub;
+    let currentUserId = req.user.sub;
     const params = req.params;
     let page = 1;
     const userData = [];
@@ -97,7 +103,7 @@ const userControllers = {
     const itemsPerPage = 5
 
     User.find().sort('_id').paginate(page, itemsPerPage, (err, users, total) => {
-      if (err) return res.status(500).send({ message: 'Error en la peticion' })
+      if (err) return res.status(500).send({ message: 'Server request error' })
       if (!users) return res.status(404).send({ message: 'No hay usuarios disponibles' })
 
       users.forEach(user => {
@@ -105,11 +111,16 @@ const userControllers = {
         userData.push(user)
       });
 
-      return res.status(200).send({
-        users: userData,
-        total,
-        pages: Math.ceil(total / itemsPerPage)
-      });
+      FollowUtilites.followUsersId(currentUserId).then((value) => {
+        return res.status(200).send({
+          users: userData,
+          total,
+          pages: Math.ceil(total / itemsPerPage),
+          user_following: value.follofing,
+          users_follow_me: value.followed
+        });
+
+      })
 
     });
   },
@@ -154,10 +165,19 @@ const userControllers = {
   getProfileImage: (req, res) => {
     const imageName = req.params.imageFile;
     return imageUtilites.checkImage(res, imageName)
+  },
+
+  getCounters: (req,res) => {
+    console.log(req.user.sub);
+    let userId = req.user.sub;
+    
+    if (req.params.id) { userId = req.params.id}
+
+    FollowUtilites.getCountFollow(userId).then((value) => {
+      return res.status(200).send({ value });
+    })
   }
 
 };
-
-imageUtilites
 
 module.exports = userControllers;

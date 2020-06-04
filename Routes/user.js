@@ -15,6 +15,7 @@ api.get('/users/:page?',mdAuth,UserControllers.getUsers)
 api.put('/edit-user/:id',mdAuth,UserControllers.updateUser)
 api.post('/upload-user-image/:id',[mdAuth,mdUploads],UserControllers.uploadProfileImage)
 api.get('/get-user-image/:imageFile',UserControllers.getProfileImage)
+api.get('/counters/:id?',mdAuth,UserControllers.getCounters)
 
 
 module.exports = api;
