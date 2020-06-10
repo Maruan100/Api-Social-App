@@ -1,13 +1,10 @@
 'use strict'
 
-const path = require('path');
-const fs = require('fs');
 const moment = require('moment');
 const mongoosePaginate = require('mongoose-pagination');
 const Publication = require('../Models/publication');
-//const User = require('../Models/user');
 const Follow = require('../Models/follow')
-
+const imageUtilites = require('./imageUtilities');
 
 const PublicationController = {
 
@@ -87,7 +84,59 @@ const PublicationController = {
         })
     },
 
+    uploadImage: (req, res) => {
+        if (Object.entries(req.files).length === 0) return res.status(404).send({ message: 'No se subido ningun archivo' });
+        else {
+            const userId = req.user.sub;
+            const publicationId = req.params.id;
+            const filePath = req.files.image.path;
+            const fileName = filePath.split('/')[3];
+            const fileExtension = fileName.split('.')[1];
+            const urlPath = 'Uploads/Users/Publications/';
 
+            Publication.findOne({ 'user': userId, '_id': publicationId }).exec((err, publication) => {
+                console.log(publication);
+
+                if (publication) {
+                    if (imageUtilites.checkExtension(res, filePath, fileExtension) === true) {
+                        Publication.findByIdAndUpdate(publicationId, { file: fileName }, (err, publicationUpdated) => {
+                            if (err) return res.status(500).send({ message: 'No tienes permiso para actulizar la imagen de usuario' })
+                            if (!publicationUpdated) return res.status(404).send({ message: 'No hay usuarios disponibles' })
+
+                            if (publicationUpdated.file) imageUtilites.removeOldImage(urlPath, publicationUpdated.file)
+                            return res.status(200).send({ publication: publicationUpdated });
+                        })
+                    }
+                } else return imageUtilites.removeFilesOfUploads(res, filePath, 'You are not allowed to upload files on this publication');
+
+            })
+
+        }
+    },
+
+    getPublicationFile: (req, res) => {
+        const imageName = req.params.imageFile;
+        const urlFile = 'Uploads/Users/Publications/';
+        return imageUtilites.checkImage(res, imageName, urlFile)
+    },
 }
 
-module.exports = PublicationController;
+
+async function getPublicationsCount(userId) {
+    const publication = await await new Promise((resolve, reject) => {
+        Publication.count({ 'user': userId }).exec((err, count) => {
+            try {
+                resolve(count)
+            } catch{
+                reject(err);
+            }
+        })
+    })
+    return publication
+}
+
+module.exports = {
+    PublicationController,
+    getPublicationsCount
+};
+

@@ -147,6 +147,7 @@ const userControllers = {
       const filePath = req.files.image.path;
       const fileName = filePath.split('/')[3];
       const fileExtension = fileName.split('.')[1];
+      const urlPath = 'Uploads/Users/Avatars/';
 
       if (userId != req.user.sub) return imageUtilites.removeFilesOfUploads(res, filePath, 'No tienes permiso para actulizar los datos del usuario');
 
@@ -155,7 +156,7 @@ const userControllers = {
           if (err) return res.status(500).send({ message: 'No tienes permiso para actulizar la imagen de usuario' })
           if (!user) return res.status(404).send({ message: 'No hay usuarios disponibles' })
           user.password = null;
-          if (user.image) imageUtilites.removeOldImage(user.image)
+          if (user.image) imageUtilites.removeOldImage(urlPath, user.image)
           return res.status(200).send({ user: user });
         })
       }
@@ -164,14 +165,15 @@ const userControllers = {
 
   getProfileImage: (req, res) => {
     const imageName = req.params.imageFile;
-    return imageUtilites.checkImage(res, imageName)
+    const urlFile = 'Uploads/Users/Avatars/';
+    return imageUtilites.checkImage(res, imageName, urlFile)
   },
 
-  getCounters: (req,res) => {
+  getCounters: (req, res) => {
     console.log(req.user.sub);
     let userId = req.user.sub;
-    
-    if (req.params.id) { userId = req.params.id}
+
+    if (req.params.id) { userId = req.params.id }
 
     FollowUtilites.getCountFollow(userId).then((value) => {
       return res.status(200).send({ value });

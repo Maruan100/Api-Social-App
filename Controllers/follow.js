@@ -1,6 +1,7 @@
 'use strict'
 const mongoosePaginate = require('mongoose-pagination');
 const Follow = require('../Models/follow');
+const PublicationUtilities = require('./publication');
 
 const FollowController = {
 
@@ -158,7 +159,7 @@ async function followThisUser(identityUserId, userId, req) {
 
 
 async function getCountFollow(userId) {
-  let following = await await new Promise((resolve, reject) => {
+  let following = await new Promise((resolve, reject) => {
     Follow.count({ 'user': userId }).exec((err, count) => {
       try {
         resolve(count)
@@ -168,7 +169,7 @@ async function getCountFollow(userId) {
     })
   })
 
-  let followers = await await new Promise((resolve, reject) => {
+  let followers = await new Promise((resolve, reject) => {
     Follow.count({ 'followed': userId }).exec((err, count) => {
       try {
         resolve(count)
@@ -178,9 +179,19 @@ async function getCountFollow(userId) {
     })
   })
 
+  let publications = await new Promise((resolve, reject) => {
+    PublicationUtilities.getPublicationsCount(userId).then(count => {
+      try {
+        resolve(count)
+      } catch{
+        reject(err);
+      }
+    })
+  });
   return {
     followings: following,
-    followers: followers
+    followers: followers,
+    publications: publications
   }
 }
 

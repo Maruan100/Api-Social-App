@@ -10,8 +10,9 @@ const imageUtilites = {
         })
     },
 
-    removeOldImage: (fileName) => {
-        let pathFile = 'Uploads/Users/Avatars/' + fileName;
+    removeOldImage: (urlPath, fileName) => {
+        let pathFile = urlPath + fileName;
+        console.log(pathFile);
         fs.unlink(pathFile, () => {
             return console.log(true);
         })
@@ -25,8 +26,8 @@ const imageUtilites = {
         else return removeFilesOfUploads(res, filePath, 'Extension no valida');
     },
 
-    checkImage: (res, fileName) => {
-        let pathFile = 'Uploads/Users/Avatars/' + fileName;
+    checkImage: (res, fileName, urlPath) => {
+        let pathFile = urlPath + fileName;
         fs.exists(pathFile, (exists) => {
             if (exists) return res.sendFile(path.resolve(pathFile))
             else return res.status(404).send({ message: 'No existe la imagen' })
