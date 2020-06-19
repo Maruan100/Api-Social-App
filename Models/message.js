@@ -4,8 +4,10 @@ const Schema = mongoose.Schema;
 
 const MessageShema = Schema({
     text: String,
+    file: String,
+    viwed: String,
     createdAt: String,
-    emmiter: {type: Schema.ObjectId, ref: 'User'},
+    emitter: {type: Schema.ObjectId, ref: 'User'},
     receiver: {type: Schema.ObjectId, ref: 'User'},
 });
 
